@@ -1,9 +1,15 @@
 const { VALUE_TRANSLATIONS, ALLOWED_VALUES, DEFAULTS } = require('../config/mapping');
 
 const extractNumber = (val) => {
+    if (!val) return 0;
+    
     if (typeof val === 'number') return val;
-    const numbers = val.match(/\d+/g);
+    
+    const stringVal = String(val);
+    const numbers = stringVal.match(/\d+/g);
+    
     if (!numbers) return 0;
+    
     if (numbers.length > 1) {
         return Math.round((parseInt(numbers[0]) + parseInt(numbers[1])) / 2);
     }
