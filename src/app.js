@@ -11,21 +11,18 @@ const app = express();
 app.use(morgan('dev'));
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.send('Primest Integration Server is Online.');
-});
+app.use(express.static('public'));
 
 app.post('/webhook/primest-leads', validateLead, async (req, res) => {
-    console.log('--- NEW LEAD ---');
     
     const rawData = req.body;
 
-    const zip = rawData.lead?.zipcode?.toString() || "";
+    const zip = String(rawData.lead?.zipcode || "");
     const isOwner = rawData.questions?.["Sind Sie Eigentümer der Immobilie?"] === "Ja";
 
     if (!zip.startsWith(VALID_ZIP_PREFIX) || !isOwner) {
-        console.log(`Lead filtered.. ZIP: ${zip}, Owner: ${isOwner}`);
-        return res.status(200).json({ status: 'filtered', reason: 'Criteria not met' });
+        console.log(`[FILTER] Lead filtered. ZIP: ${zip}, Owner: ${isOwner}`);
+        return res.status(200).json({ status: 'filtered', reason: 'Criteria not met (ZIP 66 or Owner status)' });
     }
 
     const cleanedPayload = transformLeadData(rawData);
@@ -34,11 +31,7 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
         const response = await axios.post(process.env.ENDPOINT_2_URL, cleanedPayload, {
             headers: {
                 'Authorization': `Bearer ${process.env.ENDPOINT_2_TOKEN}`,
-                'Content-Type': 'application/json',
-
-                /* 'Referer': 'https://contactapi.static.fyi/',
-                'Origin': 'https://contactapi.static.fyi/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' */
+                'Content-Type': 'application/json'
             }
         });
 
@@ -49,10 +42,10 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error sending to Endpoint 2:', error.response?.data || error.message);
+        console.error('[SERVER ERROR]', error.response?.data || error.message);
         res.status(500).json({ 
-            status: 'error', 
-            message: 'Failed to forward lead to customer API' 
+            error: 'Internal processing error',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined 
         });
     }
 });
