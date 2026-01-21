@@ -1,5 +1,15 @@
 const { VALUE_TRANSLATIONS, ALLOWED_VALUES, DEFAULTS } = require('../config/mapping');
 
+const extractNumber = (val) => {
+    if (typeof val === 'number') return val;
+    const numbers = val.match(/\d+/g);
+    if (!numbers) return 0;
+    if (numbers.length > 1) {
+        return Math.round((parseInt(numbers[0]) + parseInt(numbers[1])) / 2);
+    }
+    return parseInt(numbers[0]);
+};
+
 const splitStreetAndNumber = (fullStreet = "") => {
     const match = fullStreet.match(/^(.+?)\s?(\d+[a-z]?)$/i);
     return {
@@ -18,8 +28,10 @@ const mapAttributes = (questions) => {
     const translatedRoofAge = VALUE_TRANSLATIONS.roof_age[rawRoofAge] || "Jünger als 30 Jahre";
 
     return {
-        "solar_owner": questions["Sind Sie Eigentümer der Immobilie?"] || "Ja",
-        "solar_energy_consumption": questions["Wie hoch schätzen Sie ihren Stromverbrauch?"],
+        "solar_energy_consumption": extractNumber(questions["Wie hoch schätzen Sie ihren Stromverbrauch?"]),
+        "solar_area": extractNumber(questions["Dachfläche"] || "0"),
+        
+        "solar_owner": validateOrFallback(questions["Sind Sie Eigentümer der Immobilie?"], ["Ja", "Nein", "In Auftrag"], "Ja"),
         
         "solar_property_type": validateOrFallback(
             questions["Wo möchten Sie die Solaranlage installieren?"], 
@@ -35,23 +47,11 @@ const mapAttributes = (questions) => {
         
         "solar_roof_age": translatedRoofAge,
         
-        "solar_roof_material": validateOrFallback(
-            questions["Dachmaterial"], 
-            ALLOWED_VALUES.roof_material, 
-            DEFAULTS.MATERIAL
-        ),
-        
-        "solar_area": questions["Dachfläche"],
-        "solar_roof_pitch": questions["Dachgefälle"],
-        "solar_south_location": questions["Dachausrichtung"],
-        
         "solar_power_storage": validateOrFallback(
             questions["Stromspeicher gewünscht"], 
             ALLOWED_VALUES.storage, 
             DEFAULTS.STORAGE
         ),
-        
-        "solar_wallbox": questions["Wallbox gewünscht"] === "Ja" ? "Ja" : "Nein",
         
         "solar_offer_type": validateOrFallback(
             questions["Finanzierung"], 
