@@ -13,6 +13,27 @@ app.use(express.json());
 
 app.use(express.static('public'));
 
+let activityLogs = [];
+
+const logger = (msg) => {
+    const entry = `${new Date().toISOString()} - ${msg}`;
+    activityLogs.unshift(entry);
+    if (activityLogs.length > 20) activityLogs.pop();
+    console.log(entry);
+};
+
+app.get('/system/logs', (req, res) => {
+    res.send(`
+        <html>
+            <body style="background: #1a1a1a; color: #00ff00; font-family: monospace; padding: 20px;">
+                <h1>System Activity Logs</h1>
+                <pre>${activityLogs.join('\n')}</pre>
+                <script>setTimeout(() => location.reload(), 5000);</script>
+            </body>
+        </html>
+    `);
+});
+
 app.post('/webhook/primest-leads', validateLead, async (req, res) => {
     
     const rawData = req.body;
@@ -21,11 +42,11 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
     const zipStr = String(rawZip || "");
     const isOwner = rawData.questions?.["Sind Sie Eigentümer der Immobilie?"] === "Ja";
 
-    console.log(`--- NEW LEAD RECEIVED ---`);
-    console.log(`Incoming ZIP: "${rawZip}" | Owner: ${isOwner}`);
+    logger(`--- NEW LEAD RECEIVED ---`);
+    logger(`Incoming ZIP: "${rawZip}" | Owner: ${isOwner}`);
 
     if (!zipStr.startsWith(VALID_ZIP_PREFIX) || !isOwner) {
-        console.log(`[FILTER] Lead REJECTED. ZIP: ${zipStr}, Owner: ${isOwner}`);
+        logger(`[FILTER] Lead REJECTED. ZIP: ${zipStr}, Owner: ${isOwner}`);
         return res.status(200).json({ status: 'filtered', reason: 'Criteria not met (ZIP 66 or Owner status)' });
     }
 
@@ -39,14 +60,14 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
             }
         });
 
-        console.log('Lead successfully sent to client. ID:', response.data.id);
+        logger('Lead successfully sent to client. ID:', response.data.id);
         res.status(201).json({
             status: 'success',
             customer_response: response.data
         });
 
     } catch (error) {
-        console.error('[SERVER ERROR]', error.response?.data || error.message);
+        logger('[SERVER ERROR]', error.response?.data || error.message);
         res.status(500).json({ 
             error: 'Internal processing error',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined 
@@ -56,5 +77,5 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger(`Server running on port ${PORT}`);
 });
