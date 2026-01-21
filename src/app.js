@@ -17,11 +17,15 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
     
     const rawData = req.body;
 
-    const zip = String(rawData.lead?.zipcode || "");
+    const rawZip = rawData.lead?.zipcode;
+    const zipStr = String(rawZip || "");
     const isOwner = rawData.questions?.["Sind Sie Eigentümer der Immobilie?"] === "Ja";
 
-    if (!zip.startsWith(VALID_ZIP_PREFIX) || !isOwner) {
-        console.log(`[FILTER] Lead filtered. ZIP: ${zip}, Owner: ${isOwner}`);
+    console.log(`--- NEW LEAD RECEIVED ---`);
+    console.log(`Incoming ZIP: "${rawZip}" | Owner: ${isOwner}`);
+
+    if (!zipStr.startsWith(VALID_ZIP_PREFIX) || !isOwner) {
+        console.log(`[FILTER] Lead REJECTED. ZIP: ${zipStr}, Owner: ${isOwner}`);
         return res.status(200).json({ status: 'filtered', reason: 'Criteria not met (ZIP 66 or Owner status)' });
     }
 
