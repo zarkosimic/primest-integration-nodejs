@@ -60,7 +60,7 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
             }
         });
 
-        logger('Lead successfully sent to client. ID:', response.data.id);
+        logger(`Lead successfully sent to client. ID: ${response.data.id}`);
         res.status(201).json({
             status: 'success',
             customer_response: response.data
