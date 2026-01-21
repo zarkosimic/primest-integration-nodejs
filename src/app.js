@@ -17,7 +17,7 @@ app.post('/webhook/primest-leads', validateLead, async (req, res) => {
     
     const rawData = req.body;
 
-    const rawZip = rawData.lead?.zipcode;
+    const rawZip = rawData.zipcode;
     const zipStr = String(rawZip || "");
     const isOwner = rawData.questions?.["Sind Sie Eigentümer der Immobilie?"] === "Ja";
 

@@ -14,7 +14,7 @@ const calculateLeadScore = (rawData) => {
 };
 
 const transformLeadData = (rawData) => {
-    const address = splitStreetAndNumber(rawData.lead.street);
+    const address = splitStreetAndNumber(rawData.street);
     const attributes = mapAttributes(rawData.questions);
 
     attributes["internal_lead_quality"] = calculateLeadScore(rawData);
@@ -22,14 +22,14 @@ const transformLeadData = (rawData) => {
     
     return {
         lead: {
-            phone: rawData.lead.phone,
-            email: rawData.lead.email,
-            first_name: rawData.lead.first_name,
-            last_name: rawData.lead.last_name,
+            phone: rawData.phone,
+            email: rawData.email,
+            first_name: rawData.first_name,
+            last_name: rawData.last_name,
             street: address.streetName,
             housenumber: address.houseNumber,
-            postcode: rawData.lead.zipcode.toString(),
-            city: rawData.lead.city,
+            postcode: rawData.zipcode.toString(),
+            city: rawData.city,
             country: "de"
         },
         product: {
