@@ -18,7 +18,7 @@ let activityLogs = [];
 const logger = (msg) => {
     const entry = `${new Date().toISOString()} - ${msg}`;
     activityLogs.unshift(entry);
-    if (activityLogs.length > 20) activityLogs.pop();
+    if (activityLogs.length > 30) activityLogs.pop();
     console.log(entry);
 };
 
